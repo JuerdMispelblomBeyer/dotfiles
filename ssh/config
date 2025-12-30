@@ -1,0 +1,16 @@
+Host usom
+  Port 22
+  User exr
+  HostName 192.168.90.59
+Host exp
+  Port 22
+  User niels
+  HostName 192.168.90.54
+Host 213
+  Port 22
+  User exr
+  HostName 192.168.90.51
+Host jetson
+  Port     22
+  User     exr2-jetson
+  Hostname 192.168.45.101

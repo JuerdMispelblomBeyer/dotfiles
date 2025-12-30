@@ -131,9 +131,10 @@ alias mv="mv -i" # Adds check on override
 alias gc="git clone"
 alias gs="git status"
 alias gb="git branch -r"
+alias gp="git push"
 
 # Source Helper Scripts
-source ~/.dev/mcd.sh
+#source ~/.dev/mcd.sh
 
 #-------------------------------------------------------------------------
 # History
