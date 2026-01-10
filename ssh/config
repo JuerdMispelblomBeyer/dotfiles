@@ -14,3 +14,7 @@ Host jetson
   Port     22
   User     exr2-jetson
   Hostname 192.168.45.101
+Host exp-rami
+  Port 22
+  User exrobotics
+  HostName 192.168.90.52
