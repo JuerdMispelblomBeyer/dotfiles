@@ -190,8 +190,12 @@ _ros_autosource_exr2() {
 }
 
 #######################################################
-#   Official ROS 2 environments
+# ROS 2
 #######################################################
+# export ROS_LOG_DIR=x      # Control the logging directory that is used for writing logging messages to disk
+# export ROS_HOME=x         # Control the home directory that is used for various ROS files, including logging and config files.
+
+# Source ROS2 base environments
 for setup in \
     /opt/ros/humble/setup.zsh \
     "$HOME/ros2_humble/install/setup.zsh"
@@ -199,17 +203,21 @@ do
 [[ -f $setup ]] && source "$setup"
 done
 
-#######################################################
-#   ROS 2 auto‑overlay for ExR2 workspaces
-#######################################################
+# ROS 2 auto‑overlay for ExR2 workspaces
 _ros_autosource_exr2
+
+# Configure logging
+# See https://docs.ros.org/en/foxy/Concepts/About-Logging.html
+export RCUTILS_CONSOLE_OUTPUT_FORMAT="[{severity} {time}] [{name}]: {message} ({function_name}() at {file_name}:{line_number})" # 
+export RCUTILS_COLORIZED_OUTPUT=1
+# export RCUTILS_LOGGING_USE_STDOUT=1           # Control what stream output messages go to
+# export RCUTILS_LOGGING_BUFFERED_STREAM=1      # Control whether the logging stream should be line buffered or unbuffered
+
+# Useful aliases
+# Consider using this: https://github.com/kimushun1101/ros2-aliases/blob/main/ros2_aliases.bash
 
 #######################################################
 #  Things that need to happen last
 #######################################################
 source ~/.oh-my-zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 source ~/.oh-my-zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-
-
-
-
