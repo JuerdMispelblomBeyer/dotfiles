@@ -1,8 +1,15 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 
 # based on https://github.com/tonynajjar/ros2-aliases
 
 function cyan  { echo -e "\033[36m$1\033[m"; }
+
+function _ros2_run_cmd {
+  local cmd_str="$1"
+  local -a cmd
+  cmd=(${=cmd_str})
+  $cmd
+}
 
 # ROS 2 run
 
@@ -10,16 +17,16 @@ function rrun {
   if [ $# -eq 0 ]; then
     local PKG_NAME=$(ros2 pkg list | fzf)
     [[ -z "$PKG_NAME" ]] && return
-    history -s "rrun $PKG_NAME"
+    print -s -- "rrun $PKG_NAME"
     rrun $PKG_NAME
   elif [ $# -eq 1 ]; then
     local PKG_AND_EXE=$(ros2 pkg executables | grep $1 | fzf)
     [[ -z "$PKG_AND_EXE" ]] && return
     local CMD="ros2 run $PKG_AND_EXE"
     cyan "$CMD"
-    $CMD
-    history -s rrun
-    history -s $CMD
+    _ros2_run_cmd "$CMD"
+    print -s -- "rrun"
+    print -s -- "$CMD"
   fi
 }
 
@@ -28,9 +35,9 @@ function rrun {
 function rtlist {
     local CMD="ros2 topic list"
     cyan "$CMD"
-    $CMD
-    history -s rtlist
-    history -s $CMD
+    _ros2_run_cmd "$CMD"
+    print -s -- "rtlist"
+    print -s -- "$CMD"
 }
 
 function rtecho {
@@ -38,9 +45,9 @@ function rtecho {
     [[ -z "$TOPIC" ]] && return
     CMD="ros2 topic echo $TOPIC"
     cyan "$CMD"
-    $CMD
-    history -s rtecho
-    history -s $CMD
+    _ros2_run_cmd "$CMD"
+    print -s -- "rtecho"
+    print -s -- "$CMD"
 }
 
 function rtinfo {
@@ -48,9 +55,9 @@ function rtinfo {
     [[ -z "$TOPIC" ]] && return
     local CMD="ros2 topic info -v $TOPIC"
     cyan "$CMD"
-    $CMD
-    history -s rtinfo
-    history -s $CMD
+    _ros2_run_cmd "$CMD"
+    print -s -- "rtinfo"
+    print -s -- "$CMD"
 }
 
 function rtbw {
@@ -58,9 +65,9 @@ function rtbw {
     [[ -z "$TOPIC" ]] && return
     local CMD="ros2 topic bw $TOPIC"
     cyan "$CMD"
-    $CMD
-    history -s rtbw
-    history -s $CMD
+    _ros2_run_cmd "$CMD"
+    print -s -- "rtbw"
+    print -s -- "$CMD"
 }
 
 # Nodes
@@ -68,9 +75,9 @@ function rtbw {
 function rnlist {
     local CMD="ros2 node list"
     cyan "$CMD"
-    $CMD
-    history -s rnlist
-    history -s $CMD
+    _ros2_run_cmd "$CMD"
+    print -s -- "rnlist"
+    print -s -- "$CMD"
 }
 
 function rninfo {
@@ -78,17 +85,17 @@ function rninfo {
     [[ -z "$NODE" ]] && return
     local CMD="ros2 node info $NODE"
     cyan "$CMD"
-    $CMD
-    history -s rninfo
-    history -s $CMD
+    _ros2_run_cmd "$CMD"
+    print -s -- "rninfo"
+    print -s -- "$CMD"
 }
 
 function rnkill {
     local NODE_TO_KILL_RAW=$(ros2 node list | fzf)
     [[ -z "$NODE_TO_KILL_RAW" ]] && return
-    local NODE_TO_KILL=(${NODE_TO_KILL_RAW//// })
+    local -a NODE_TO_KILL=(${(s:/:)NODE_TO_KILL_RAW})
     NODE_TO_KILL=${NODE_TO_KILL[-1]} # extract last word from node name
-    NODE_TO_KILL=[${NODE_TO_KILL:0:1}]${NODE_TO_KILL:1}
+    NODE_TO_KILL="[${NODE_TO_KILL[1]}]${NODE_TO_KILL[2,-1]}"
     # The method used is to parse the PID and use kill <PID>.
     # If more than 1 PID is found, we abort to avoid killing other processes.
     # The parsing checks for any process with the string [/]$NODE_TO_KILL.
@@ -104,9 +111,9 @@ function rnkill {
     local PROC_PID=$(ps aux | grep [/]$NODE_TO_KILL | awk '{print $2}')
     local CMD="kill $PROC_PID"
     echo "Killing $NODE_TO_KILL_RAW with PID $PROC_PID"
-    $CMD
-    history -s rnlist
-    history -s $CMD
+    _ros2_run_cmd "$CMD"
+    print -s -- "rnlist"
+    print -s -- "$CMD"
 }
 
 # Services
@@ -114,9 +121,9 @@ function rnkill {
 function rslist {
     local CMD="ros2 service list"
     cyan "$CMD"
-    $CMD
-    history -s rslist
-    history -s $CMD
+    _ros2_run_cmd "$CMD"
+    print -s -- "rslist"
+    print -s -- "$CMD"
 }
 
 # Parameters
@@ -126,9 +133,9 @@ function rplist {
     [[ -z "$NODE" ]] && return
     local CMD="ros2 param list $NODE --param-type"
     cyan "$CMD"
-    $CMD
-    history -s rplist
-    history -s $CMD
+    _ros2_run_cmd "$CMD"
+    print -s -- "rplist"
+    print -s -- "$CMD"
 }
 
 function rpget {
@@ -138,9 +145,9 @@ function rpget {
     [[ -z "$PARAM" ]] && return
     local CMD="ros2 param get $NODE $PARAM"
     cyan "$CMD"
-    $CMD
-    history -s rpget
-    history -s $CMD
+    _ros2_run_cmd "$CMD"
+    print -s -- "rpget"
+    print -s -- "$CMD"
 }
 
 function rpset {
@@ -152,9 +159,9 @@ function rpset {
     read VALUE
     local CMD="ros2 param set $NODE $PARAM $VALUE"
     cyan "$CMD"
-    $CMD
-    history -s rpset
-    history -s $CMD
+    _ros2_run_cmd "$CMD"
+    print -s -- "rpset"
+    print -s -- "$CMD"
 }
 
 # Interface
@@ -164,9 +171,9 @@ function rishow {
   [[ -z "$INTERFACE" ]] && return
   local CMD="ros2 interface show $INTERFACE"
   cyan "$CMD"
-  $CMD
-  history -s rishow
-  history -s $CMD
+  _ros2_run_cmd "$CMD"
+  print -s -- "rishow"
+  print -s -- "$CMD"
 }
 
 # TF
@@ -179,9 +186,9 @@ function view_frames {
     fi
     local CMD="ros2 run tf2_tools view_frames $REMAP"
     cyan "$CMD"
-    $CMD
-    history -s view_frames $@
-    history -s $CMD
+    _ros2_run_cmd "$CMD"
+    print -s -- "view_frames $*"
+    print -s -- "$CMD"
 }
 
 function tf_echo {
@@ -192,9 +199,9 @@ function tf_echo {
     fi
     local CMD="ros2 run tf2_ros tf2_echo $1 $2 $REMAP"
     cyan "$CMD"
-    $CMD
-    history -s tf_echo $@
-    history -s $CMD
+    _ros2_run_cmd "$CMD"
+    print -s -- "tf_echo $*"
+    print -s -- "$CMD"
 }
 
 # Colcon
@@ -202,9 +209,9 @@ function tf_echo {
 function cb {
     CMD="colcon build --symlink-install"
     cyan "$CMD"
-    $CMD
-    history -s cb $@
-    history -s $CMD
+    _ros2_run_cmd "$CMD"
+    print -s -- "cb $*"
+    print -s -- "$CMD"
 }
 
 function cbp {
@@ -216,17 +223,17 @@ function cbp {
         local CMD="colcon build --symlink-install --packages-select $@"
     fi
     cyan "$CMD"
-    $CMD
-    history -s cbp $@
-    history -s $CMD
+    _ros2_run_cmd "$CMD"
+    print -s -- "cbp $*"
+    print -s -- "$CMD"
 }
 
 function cl {
     CMD="colcon list -n"
     cyan "$CMD"
-    $CMD
-    history -s cl $@
-    history -s $CMD
+    _ros2_run_cmd "$CMD"
+    print -s -- "cl $*"
+    print -s -- "$CMD"
 }
 
 # Rosdep
@@ -234,7 +241,7 @@ function cl {
 function rosdep_install {
     local CMD="rosdep install --from-paths src --ignore-src -r -y"
     cyan "$CMD"
-    $CMD
-    history -s rosdep_install
-    history -s $CMD
+    _ros2_run_cmd "$CMD"
+    print -s -- "rosdep_install"
+    print -s -- "$CMD"
 }

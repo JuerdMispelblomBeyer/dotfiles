@@ -1,11 +1,12 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 
 function red   { echo -e "\033[31m$1\033[m"; }
 function green { echo -e "\033[32m$1\033[m"; }
 function cyan  { echo -e "\033[36m$1\033[m"; }
 
-ROS2_ALIASES=$BASH_SOURCE
-ROS2_ALIASES_DIR=`dirname $ROS2_ALIASES`
+ROS2_ALIASES=${(%):-%N}
+ROS2_ALIASES=${ROS2_ALIASES:A}
+ROS2_ALIASES_DIR=${ROS2_ALIASES:h}
 
 # set env function
 function setenvfile {
@@ -37,18 +38,18 @@ function setenvfile {
   fi
 }
 
-cp -n $ROS2_ALIASES_DIR/.env_example $ROS2_ALIASES_DIR/.env
+# cp -n $ROS2_ALIASES_DIR/.env_example $ROS2_ALIASES_DIR/.env
 setenvfile $ROS2_ALIASES_DIR/.env
 
 # source other scripts
-source "$ROS2_ALIASES_DIR/ros2_utils.bash"
-if [ -e "/opt/ros/$ROS_DISTRO/setup.bash" ]; then
-  source /opt/ros/$ROS_DISTRO/setup.bash
+source "$ROS2_ALIASES_DIR/ros2_utils.zsh"
+if [ -e "/opt/ros/$ROS_DISTRO/setup.zsh" ]; then
+  source /opt/ros/$ROS_DISTRO/setup.zsh
 else
   red "[ros2 aliases] Invalid ROS 2 version : $ROS_DISTRO"
 fi
-if [ -e "$ROS_WORKSPACE/install/setup.bash" ]; then
-  source $ROS_WORKSPACE/install/setup.bash
+if [ -e "$ROS_WORKSPACE/install/setup.zsh" ]; then
+  source $ROS_WORKSPACE/install/setup.zsh
 fi
 
 # ros2 aliases help
@@ -106,7 +107,7 @@ function setrws {
   cd $workspace_candidate
   ROS_WORKSPACE=$(pwd)
   echo "`cyan ROS_WORKSPACE` : "$ROS_WORKSPACE""
-  history -s "setrws $ROS_WORKSPACE"
+  print -s -- "setrws $ROS_WORKSPACE"
 }
 
 # set colcon build
@@ -144,9 +145,10 @@ function _check_ROSWS_env() {
 
 function colcon_build_command_exec {
   pushd $ROS_WORKSPACE > /dev/null
-  cyan "$@"
-  $@
-  source ./install/setup.bash
+  local cmd_str="$*"
+  cyan "$cmd_str"
+  _ros2_run_cmd "$cmd_str"
+  source ./install/setup.zsh
   popd > /dev/null
 }
 
@@ -164,7 +166,7 @@ function cbcf {
   _check_ROSWS_env && return
   local cmd="$COLCON_BUILD_CMD --cmake-clean-first"
   cyan "$cmd"
-  read -p "Do you want to execute? (y:Yes/n:No): " yn
+  read -r "yn?Do you want to execute? (y:Yes/n:No): "
   case "$yn" in
     [yY]*);;
     *) return ;;
@@ -176,7 +178,7 @@ function cbrm {
   _check_ROSWS_env && return
   local cmd="$COLCON_BUILD_CMD"
   cyan "rm -rf build install log && $cmd"
-  read -p "Do you want to execute? (y:Yes/n:No): " yn
+  read -r "yn?Do you want to execute? (y:Yes/n:No): "
   case "$yn" in
     [yY]*);;
     *) return ;;
@@ -193,7 +195,7 @@ function cbp {
     [[ -z "$pkg_name" ]] && return
   fi
   colcon_build_command_exec "$COLCON_BUILD_CMD --packages-select $pkg_name"
-  history -s "cbp $pkg_name"
+  print -s -- "cbp $pkg_name"
 }
 
 function cbprm {
@@ -206,7 +208,7 @@ function cbprm {
   local cmd="$COLCON_BUILD_CMD --packages-select $pkg_names"
   cyan "rm -rf build/pkgs install/pkgs log/pkgs && $cmd"
   cyan "pkgs : $pkg_names"
-  read -p "Do you want to execute? (y:Yes/n:No): " yn
+  read -r "yn?Do you want to execute? (y:Yes/n:No): "
   case "$yn" in
     [yY]*);;
     *) return ;;
@@ -229,17 +231,20 @@ function ctp {
   pushd $ROS_WORKSPACE > /dev/null
   cbp $pkg_name
   local cmd="colcon test --parallel-workers $(nproc) --packages-select $pkg_name"
-  cyan "$cmd" && $cmd
+  cyan "$cmd" && _ros2_run_cmd "$cmd"
   cmd="colcon test-result --verbose"
-  cyan "$cmd" && $cmd
-  history -s "ctp $pkg_name"
+  cyan "$cmd" && _ros2_run_cmd "$cmd"
+  print -s -- "ctp $pkg_name"
   popd > /dev/null
 }
 _pkg_name_complete() {
-  local pkg_names=$(find $ROS_WORKSPACE/src -name "package.xml" -print0 | while IFS= read -r -d '' file; do grep -oP '(?<=<name>).*?(?=</name>)' "$file"; done)
-  COMPREPLY=( $(compgen -W "$pkg_names" -- "${COMP_WORDS[$COMP_CWORD]}") )
+  local -a pkg_names
+  pkg_names=("${(f)$(find $ROS_WORKSPACE/src -name "package.xml" -print0 | while IFS= read -r -d '' file; do grep -oP '(?<=<name>).*?(?=</name>)' "$file"; done)}")
+  compadd -- $pkg_names
 }
-complete -F _pkg_name_complete cbp cbprm ctp
+if command -v compdef >/dev/null; then
+  compdef _pkg_name_complete cbp cbprm ctp
+fi
 
 # ---roscd---
 function roscd {
@@ -248,17 +253,20 @@ function roscd {
   if [ -z "$1" ]; then
     pkg_dir_name=$(find $ROS_WORKSPACE/src -name "package.xml" -printf "%h\n" | awk -F/ '{print $NF}' | fzf)
     [[ -z "$pkg_dir_name" ]] && cd $ROS_WORKSPACE && return
-    history -s "roscd $pkg_dir_name"
+    print -s -- "roscd $pkg_dir_name"
   fi
   local pkg_dir=$(find $ROS_WORKSPACE/src -name $pkg_dir_name | awk '{print length() ,$0}' | sort -n | awk '{ print  $2 }' | head -n 1)
   [[ -z $pkg_dir ]] && red "[ros2 aliases] No such package : $pkg_dir_name" && return
   cd $pkg_dir
 }
 _pkg_directory_complete() {
-  local pkg_dir_names=$(find $ROS_WORKSPACE/src -name "package.xml" -printf "%h\n" | awk -F/ '{print $NF}')
-  COMPREPLY=( $(compgen -W "$pkg_dir_names" -- "${COMP_WORDS[$COMP_CWORD]}") )
+  local -a pkg_dir_names
+  pkg_dir_names=("${(f)$(find $ROS_WORKSPACE/src -name "package.xml" -printf "%h\n" | awk -F/ '{print $NF}')}")
+  compadd -- $pkg_dir_names
 }
-complete -o nospace -F _pkg_directory_complete roscd
+if command -v compdef >/dev/null; then
+  compdef _pkg_directory_complete roscd
+fi
 
 # ---rosdep---
 function rosdep_install {
@@ -266,7 +274,7 @@ function rosdep_install {
   pushd $ROS_WORKSPACE > /dev/null
   cyan "rosdep install --from-paths src --ignore-src -y"
   rosdep install --from-paths src --ignore-src -y
-  source /opt/ros/$ROS_DISTRO/setup.bash
+  source /opt/ros/$ROS_DISTRO/setup.zsh
   popd > /dev/null
 }
 
@@ -284,7 +292,7 @@ function rlaunch {
   [[ -z $launch_file ]] && return
   local cmd="ros2 launch $pkg_name $launch_file"
   cyan "$cmd"
-  $cmd
-  history -s "rlaunch"
-  history -s "$cmd"
+  _ros2_run_cmd "$cmd"
+  print -s -- "rlaunch"
+  print -s -- "$cmd"
 }
