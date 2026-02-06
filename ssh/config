@@ -1,20 +1,28 @@
-Host usom
+Host 200_usom
   Port 22
   User exr
   HostName 192.168.90.59
-Host exp
-  Port 22
-  User niels
-  HostName 192.168.90.54
-Host 213
-  Port 22
-  User exr
-  HostName 192.168.90.51
-Host jetson
+Host 200_jetson
   Port     22
   User     exr2-jetson
   Hostname 192.168.45.101
+Host 213_usom
+  Port 22
+  User exr
+  HostName 192.168.90.51
+Host 213_jetson
+  Port 22
+  User exr
+  HostName 192.168.90.51
+Host rpi_home
+  Port 50222
+  User jqmb
+  Hostname 82.170.225.114
 Host exp-rami
   Port 22
   User exrobotics
   HostName 192.168.90.52
+Host exp
+  Port 22
+  User niels
+  HostName 192.168.90.54

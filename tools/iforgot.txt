@@ -1,0 +1,30 @@
+List all available partitions to mount  lsblk
+Mount drive the easy way                udisksctl mount -b /dev/sd[letter][number]
+Start OpenVPN                           sudo openvpn --config /etc/openvpn/elitebook.ovpn
+Music CD burner                         k3b
+Mass file renamer                       thunar -B
+File copier with progress bar:          rsync -vau
+Check ip/mac address:                   ifconfig -a
+List all installed packages             apt-list-installedbyme                  (see ~/.bash_aliases)
+pdftk examples:                         pdftk file1.pdf file2.pdf file3.pdf cat output newfile.pdf
+pdftk examples:                         pdftk A=one.pdf B=two.pdf cat A1-7 B1-5 A8 output combined.pdf
+Recover lost or deleted files:          photorec
+Try to fix a jacked up drive:           testdisk
+Markdown link:                          [link text](htttp://www.url-website.con)
+Tar examples:
+  Gzip (standard, fastest)              tar -czvf archive.tar.gz stuff
+  Bzip2 (better compression, slower)    tar -cjvf archive.tar.bz2 stuff
+  Bzip2 (better compression, slower)    tar -cJvf archive.tar.xz stuff
+  extract files                         tar -xvf archive.tar.<ext>
+  zip                                   zip [-b path] archive.zip stuff
+  unzip
+Bash "for" syntax:                      for f in foo*.pattern; do mv "$f" "${f/%.pattern/.replace}"; done
+Performance monitor, show processes     htop
+PerfMon that shows hard disk usage      iotop
+Show all kinds of helpful system info   inxi -Fxzd
+Run script.sh at startup                add script.desktop to /home/USERNAME/.config/autostart/
+cat text file to clipboard              cat new_tutoring_student.txt | xsel -b
+pv syntax                               pv < inputfile > outputfile
+in case of an I/O error with dd or pv   sudo ddrescue inputfile outputfile
+in case printing suddenly has issues,   try re-enabling cups-browsed
+    maybe do                            sudo systemctl enable cups-browsed.service
