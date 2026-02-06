@@ -131,11 +131,12 @@ zshaddhistory() {
 # ROS 2
 #-------------------------------------------------------------------------
 # Enable auto-sourcing unless explicitly disabled
-if command -v ros2_autosource >/dev/null 2>&1; then
-  if [ -z "${ROS2_AUTOSOURCE_DISABLE-}" ]; then
-    ros2_autosource
-  fi
-fi
+#if command -v ros2_autosource >/dev/null 2>&1; then
+#  if [ -z "${ROS2_AUTOSOURCE_DISABLE-}" ]; then
+#    ros2_autosource
+#  fi
+#fi
+alias ros='ros2_autosource'
 
 # Logging format
 export RCUTILS_CONSOLE_OUTPUT_FORMAT="[{severity} {time}] [{name}]: {message} ({function_name}() at {file_name}:{line_number})"
