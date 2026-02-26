@@ -77,15 +77,18 @@ PROMPT='%F{#686de0}%n%f %F{blue}%B::%b %~%f %F{yellow}${vcs_info_msg_0_}%f%F{blu
 alias zshconfig="xdg-open ~/.zshrc"
 
 # Project shortcuts
-alias exr="cd ~/dev/exr2"
-alias core="cd ~/dev/exr2/exr2_core"
-alias base="cd ~/dev/exr2/exr2_base"
-alias operation="cd ~/dev/exr2/exr2_operation"
-alias comms="cd ~/dev/exr2/exr2_communications"
-alias sim="cd ~/dev/exr2/exr2_simulation"
+alias exr="cd ~/Development/exr2"
+alias core="cd ~/Development/exr2/exr2_core"
+alias base="cd ~/Development/exr2/exr2_base"
+alias operation="cd ~/Development/exr2/exr2_operation"
+alias comms="cd ~/Development/exr2/exr2_communications"
+alias sim="cd ~/Development/exr2/exr2_simulation"
 
 # Safer defaults
 alias mv="mv -i"
+
+# 
+alias rr="rm -r"
 
 # Git shortcuts
 alias gc="git clone"
