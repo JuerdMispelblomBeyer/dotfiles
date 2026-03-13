@@ -77,6 +77,7 @@ PROMPT='%F{#686de0}%n%f %F{blue}%B::%b %~%f %F{yellow}${vcs_info_msg_0_}%f%F{blu
 alias zshconfig="xdg-open ~/.zshrc"
 
 # Project shortcuts
+alias dev="cd ~/Development"
 alias exr="cd ~/Development/exr2"
 alias core="cd ~/Development/exr2/exr2_core"
 alias base="cd ~/Development/exr2/exr2_base"
@@ -85,9 +86,9 @@ alias comms="cd ~/Development/exr2/exr2_communications"
 alias sim="cd ~/Development/exr2/exr2_simulation"
 
 # Safer defaults
-alias mv="mv -i"
-
-# 
+alias mv="mv -iv"
+alias cp="cp -riv"
+alias mkdir="mkdir -vp "
 alias rr="rm -r"
 
 # Git shortcuts
@@ -95,6 +96,14 @@ alias gc="git clone"
 alias gs="git status"
 alias gb="git branch -r"
 alias gp="git push"
+
+# Docker shortcuts
+alias dcl="docker container ls"
+alias dcla="docker container ls -a"
+alias dil="docker image ls"
+alias dsp="docker system prune"
+alias dnl="docker network ls"
+alias dvl="docker volume ls"
 
 #-------------------------------------------------------------------------
 # Dotfiles loader

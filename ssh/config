@@ -1,26 +1,24 @@
-Host 200_usom
+Host 200-usom
   Port 22
   User exr
   HostName 192.168.90.59
-#  IdentityFile ~/.ssh/hp_juerd_dev_main.pub
-Host 200_jetson
+Host 200-jetson
   Port     22
   User     exr
   Hostname 192.168.45.101
-  IdentityFile ~/.ssh/hp_juerd_dev_main.pub
-  ProxyJump 200_usom 
-Host 213_usom
-  Port 22
-  User exr
-  HostName 192.168.90.51
-  IdentityFile ~/.ssh/hp_juerd_dev_main.pub
-Host 213_jetson
-  Port 22
-  User exr
-  HostName 192.168.90.51
-  IdentityFile ~/.ssh/hp_juerd_dev_main.pub
+  ProxyJump 200-usom 
 
-Host rpi_home
+Host 213-usom
+  Port 22
+  User exr
+  HostName 192.168.90.51
+Host 213-jetson
+  Port 22
+  User exr
+  HostName 192.168.45.101
+  ProxyJump 213-usom
+
+Host rpi-home
   Port 50222
   User jqmb
   Hostname 82.170.225.114

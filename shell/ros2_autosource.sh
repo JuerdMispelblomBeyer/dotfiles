@@ -33,7 +33,7 @@ ros2_autosource_exr2() {
   ROS2_AUTOSOURCE_DONE=1
 
   ros2_setup_ext=$(_ros2_setup_suffix)
-  ros2_root=${ROS2_EXR2_ROOT:-"$HOME/dev/exr2"}
+  ros2_root=${ROS2_EXR2_ROOT:-"$HOME/Development/exr2"}
 
   if [ -n "${ZSH_VERSION-}" ]; then
     setopt local_options nonomatch 2>/dev/null
