@@ -1,4 +1,4 @@
-# Shell-agnostic ROS 2 autosource helpers for bash and zsh.
+# Shell-agnostic ROS 2 lazy-load helpers for bash and zsh.
 
 _ros2_setup_suffix() {
   if [ -n "${ZSH_VERSION-}" ]; then
@@ -16,40 +16,45 @@ _ros2_setup_suffix() {
   esac
 }
 
-ros2_source_base() {
-  [ -n "${ROS2_BASE_SOURCED-}" ] && return 0
-  ROS2_BASE_SOURCED=1
-
-  ros2_setup_ext=$(_ros2_setup_suffix)
-  for setup in /opt/ros/humble/setup."$ros2_setup_ext" \
-               "$HOME/ros2_humble/install/setup.$ros2_setup_ext"
-  do
-    [ -f "$setup" ] && . "$setup"
-  done
+_ros2_aliases_file() {
+  dotfiles_dir=${DOTFILES_DIR:-"$HOME/dotfiles"}
+  if [ -n "${ZSH_VERSION-}" ]; then
+    printf '%s' "$dotfiles_dir/ros/ros2_aliases.zsh"
+    return
+  fi
+  printf '%s' "$dotfiles_dir/ros/ros2_aliases.bash"
 }
 
-ros2_autosource_exr2() {
-  [ -n "${ROS2_AUTOSOURCE_DONE-}" ] && return 0
-  ROS2_AUTOSOURCE_DONE=1
+ros2_source_base() {
+  [ -n "${ROS2_BASE_SOURCED-}" ] && return 0
 
   ros2_setup_ext=$(_ros2_setup_suffix)
-  ros2_root=${ROS2_EXR2_ROOT:-"$HOME/Development/exr2"}
+  ros2_distro=${ROS2_DEFAULT_DISTRO:-humble}
+  ros2_setup_file="/opt/ros/$ros2_distro/setup.$ros2_setup_ext"
 
-  if [ -n "${ZSH_VERSION-}" ]; then
-    setopt local_options nonomatch 2>/dev/null
+  if [ ! -f "$ros2_setup_file" ]; then
+    printf '[ros2] setup file not found: %s\n' "$ros2_setup_file" >&2
+    return 1
   fi
 
-  for ws in "$ros2_root"/*; do
-    [ -d "$ws" ] || continue
-    setup_file="$ws/install/setup.$ros2_setup_ext"
-    if [ -f "$setup_file" ]; then
-      printf '[ros2] overlaying %s\n' "$ws"
-      . "$setup_file"
-    fi
-  done
+  . "$ros2_setup_file" || return 1
+  ROS2_BASE_SOURCED=1
+}
+
+ros2_source_aliases() {
+  [ -n "${ROS2_ALIASES_SOURCED-}" ] && return 0
+
+  ros2_aliases_file=$(_ros2_aliases_file)
+  if [ ! -f "$ros2_aliases_file" ]; then
+    printf '[ros2] aliases file not found for this shell: %s\n' "$ros2_aliases_file" >&2
+    return 1
+  fi
+
+  . "$ros2_aliases_file" || return 1
+  ROS2_ALIASES_SOURCED=1
 }
 
 ros2_autosource() {
-  ros2_source_base
-  ros2_autosource_exr2
+  ros2_source_base || return 1
+  ros2_source_aliases || return 1
 }

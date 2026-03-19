@@ -41,16 +41,8 @@ function setenvfile {
 # cp -n $ROS2_ALIASES_DIR/.env_example $ROS2_ALIASES_DIR/.env
 setenvfile $ROS2_ALIASES_DIR/.env
 
-# source other scripts
+# source helper functions
 source "$ROS2_ALIASES_DIR/ros2_utils.zsh"
-if [ -e "/opt/ros/$ROS_DISTRO/setup.zsh" ]; then
-  source /opt/ros/$ROS_DISTRO/setup.zsh
-else
-  red "[ros2 aliases] Invalid ROS 2 version : $ROS_DISTRO"
-fi
-if [ -e "$ROS_WORKSPACE/install/setup.zsh" ]; then
-  source $ROS_WORKSPACE/install/setup.zsh
-fi
 
 # ros2 aliases help
 function rahelp {

@@ -8,15 +8,11 @@ esac
 
 _source_if_exists() { [ -r "$1" ] && . "$1"; }
 _source_if_exists "$DOTFILES_DIR/shell/ros2_autosource.sh"
-if [ -n "${ZSH_VERSION:-}" ]; then
-  _source_if_exists "$DOTFILES_DIR/ros/ros2_aliases.zsh"
-  _source_if_exists "$DOTFILES_DIR/ros/ros2_utils.zsh"
-elif [ -n "${BASH_VERSION:-}" ]; then
-  _source_if_exists "$DOTFILES_DIR/ros/ros2_aliases.bash"
-  _source_if_exists "$DOTFILES_DIR/ros/ros2_utils.bash"
-else
-  _source_if_exists "$DOTFILES_DIR/ros/ros2_aliases.bash"
-  _source_if_exists "$DOTFILES_DIR/ros/ros2_utils.bash"
+
+if command -v ros2_autosource >/dev/null 2>&1; then
+  ros() {
+    ros2_autosource "$@"
+  }
 fi
 
 # TODO Shell-agnostic helper
