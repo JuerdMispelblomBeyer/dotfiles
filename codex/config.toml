@@ -1,0 +1,61 @@
+model = "gpt-5.5"
+model_reasoning_effort = "high"
+personality = "pragmatic"
+service_tier = "default"
+
+[plugins."github@openai-curated"]
+enabled = true
+
+[projects."/home/juerd/Workspaces/exr2_base_ws"]
+trust_level = "trusted"
+
+[projects."/home/juerd/Development/exr2/exr2_serial_hardware_driver"]
+trust_level = "trusted"
+
+[projects."/home/juerd/Development/exr2/exr2_platform"]
+trust_level = "trusted"
+
+[projects."/home/juerd/Workspaces/exr2_base_ws/src/exr2_base/exr2_control/exr2_can_interface"]
+trust_level = "trusted"
+
+[projects."/home/juerd/Development/exr2/exr2_can_driver"]
+trust_level = "trusted"
+
+[projects."/home/juerd/Workspaces/exr2_intel_build_ws"]
+trust_level = "trusted"
+
+[projects."/home/juerd/Workspaces/exr2_communications_build_ws"]
+trust_level = "trusted"
+
+[projects."/home/juerd/Development/exr2/exr2_base"]
+trust_level = "trusted"
+
+[projects."/home/juerd/Development/exr2/exr2_core"]
+trust_level = "trusted"
+
+[projects."/home/juerd/Ops"]
+trust_level = "trusted"
+
+[projects."/home/juerd/Development/exr2_base_dev_ws"]
+trust_level = "trusted"
+
+[projects."/home/juerd/Ops/200-usom"]
+trust_level = "trusted"
+
+[projects."/home/juerd/Development/exr2_base_dev_ws/src/exr2_base"]
+trust_level = "trusted"
+
+[projects."/home/juerd/Ops/223-usom"]
+trust_level = "trusted"
+
+[projects."/home/juerd/Ops/234-jetson"]
+trust_level = "trusted"
+
+[projects."/home/juerd"]
+trust_level = "trusted"
+
+[projects."/home/juerd/dotfiles"]
+trust_level = "trusted"
+
+[tui.model_availability_nux]
+"gpt-5.5" = 4
