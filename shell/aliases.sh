@@ -10,6 +10,10 @@ alias gs="git status"
 alias gb="git branch -r"
 alias gp="git push"
 
+git_prune_local() {
+  git branch -vv | grep ': gone]' | awk '{print $1}' | xargs git branch -D
+}
+
 # Docker shortcuts
 alias dcl="docker container ls"
 alias dcla="docker container ls -a"
@@ -17,3 +21,10 @@ alias dil="docker image ls"
 alias dsp="docker system prune"
 alias dnl="docker network ls"
 alias dvl="docker volume ls"
+alias dirm="docker image rm"
+alias dip="docker image push"
+
+dcb() {
+  local _image=$1
+  docker compose -f "$_image" build
+}

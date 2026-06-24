@@ -8,6 +8,7 @@ esac
 
 _source_if_exists() { [ -r "$1" ] && . "$1"; }
 _source_if_exists "$DOTFILES_DIR/shell/ros2_autosource.sh"
+_source_if_exists "$DOTFILES_DIR/shell/aliases.sh"
 
 if command -v ros2_autosource >/dev/null 2>&1; then
   ros() {

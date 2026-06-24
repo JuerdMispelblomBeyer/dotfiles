@@ -1,12 +1,14 @@
 Host 200-usom
   Port 22
   User exr
-  HostName 192.168.90.59
+  Hostname 100.118.118.56
+#  HostName 192.168.90.59
+
 Host 200-jetson
   Port     22
   User     exr
-  Hostname 192.168.45.101
-  ProxyJump 200-usom 
+  Hostname 100.71.148.84
+#  Hostname 192.168.45.101
 
 Host 213-usom
   Port 22
@@ -17,6 +19,16 @@ Host 213-jetson
   User exr
   HostName 192.168.45.101
   ProxyJump 213-usom
+
+Host 223-jetson
+  Port 22
+  User exr
+  Hostname 100.84.194.124
+
+Host 223-usom
+  Port 22
+  User exr
+  Hostname 100.103.102.71
 
 Host rpi-home
   Port 50222
@@ -31,3 +43,14 @@ Host exp
   Port 22
   User niels
   HostName 192.168.90.54
+
+Host 234-jetson
+  Port 22
+  User exr
+  Hostname 100.68.167.79
+
+Host 234-usom
+  Port 22
+  User exr
+  HostName 192.168.45.100
+  ProxyJump 234-jetson

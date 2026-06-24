@@ -76,6 +76,9 @@ PROMPT='%F{#686de0}%n%f %F{blue}%B::%b %~%f %F{yellow}${vcs_info_msg_0_}%f%F{blu
 # Open config files
 alias zshconfig="xdg-open ~/.zshrc"
 
+# General shortcuts
+alias cl="clear"
+
 # Project shortcuts
 alias dev="cd ~/Development"
 alias exr="cd ~/Development/exr2"
@@ -145,7 +148,8 @@ zshaddhistory() {
 # `ros` is provided by shell/loader.sh and lazy-loads ROS 2 env + aliases.
 
 # Logging format
-export RCUTILS_CONSOLE_OUTPUT_FORMAT="[{severity} {time}] [{name}]: {message} ({function_name}() at {file_name}:{line_number})"
+#export RCUTILS_CONSOLE_OUTPUT_FORMAT="[{severity} {time}] [{name}]: {message} ({function_name}() at {file_name}:{line_number})"
+export RCUTILS_CONSOLE_OUTPUT_FORMAT="[{severity} {time}] [{name}]: {message}"
 export RCUTILS_COLORIZED_OUTPUT=1
 # export RCUTILS_LOGGING_USE_STDOUT=1
 # export RCUTILS_LOGGING_BUFFERED_STREAM=1
@@ -155,3 +159,7 @@ export RCUTILS_COLORIZED_OUTPUT=1
 #-------------------------------------------------------------------------
 source ~/.oh-my-zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 source ~/.oh-my-zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
