@@ -1,0 +1,6 @@
+interface:
+  display_name: "Compact Handoff"
+  short_description: "Checkpoint work without transcript bloat"
+  default_prompt: "Use $compact-handoff to create a concise continuation checkpoint for this task."
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+target="."
+output=""
+usage() { echo "usage: handoff-pack [PATH] [--output FILE]"; }
+while (($#)); do
+  case "$1" in
+    --output) output="$2"; shift 2 ;;
+    -h|--help) usage; exit 0 ;;
+    *) target="$1"; shift ;;
+  esac
+done
+target="$(cd "$target" && pwd)"
+if root="$(git -C "$target" rev-parse --show-toplevel 2>/dev/null)"; then :; else root="$target"; fi
+generate() {
+  echo "# Agent handoff"
+  echo
+  echo "- Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  echo "- Working directory: $target"
+  echo "- Repository: $root"
+  if git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "- Branch: $(git -C "$root" branch --show-current 2>/dev/null)"
+    echo
+    echo "## Working tree"
+    echo
+    echo '```text'
+    git -C "$root" status --short | sed -n '1,120p'
+    echo '```'
+    echo
+    echo "## Diff summary"
+    echo
+    echo '```text'
+    git -C "$root" diff --stat | sed -n '1,80p'
+    echo '```'
+  fi
+  echo
+  echo "## Active guidance"
+  echo
+  echo '```text'
+  "$(dirname "$0")/agentctl" chain "$target" || true
+  echo '```'
+  echo
+  echo "## Continue with"
+  echo
+  echo "Add the objective, completed work, verification, blockers, and next action here. Link logs instead of pasting them."
+}
+if [[ -n "$output" ]]; then
+  mkdir -p "$(dirname "$output")"
+  generate >"$output"
+  echo "$output"
+else
+  generate
+fi

@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+target="${1:-.}"
+target="$(cd "$target" && pwd)"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if root="$(git -C "$target" rev-parse --show-toplevel 2>/dev/null)"; then
+  echo "repository: $root"
+  printf 'branch: '; git -C "$root" branch --show-current 2>/dev/null || true
+  echo "status:"
+  git -C "$root" status --short | sed -n '1,80p'
+  changed="$(git -C "$root" status --short | wc -l)"
+  ((changed <= 80)) || echo "  ... $((changed - 80)) more changed paths"
+  echo "diff-stat:"
+  git -C "$root" diff --stat | sed -n '1,40p'
+else
+  root="$target"
+  echo "workspace: $root (not a Git repository)"
+fi
+echo "guidance:"
+"$script_dir/agentctl" chain "$target" || true
+echo "manifests:"
+find "$root" -maxdepth 2 -type f \( -name package.json -o -name pyproject.toml -o -name Cargo.toml -o -name CMakeLists.txt -o -name Makefile -o -name justfile -o -name README.md \) -not -path '*/build/*' -not -path '*/node_modules/*' -printf '%P\n' 2>/dev/null | sort | sed -n '1,60p'

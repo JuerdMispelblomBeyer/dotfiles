@@ -1,0 +1,6 @@
+interface:
+  display_name: "Compact Orientation"
+  short_description: "Orient in a repository compactly"
+  default_prompt: "Use $compact-orientation to inspect this repository with a small context footprint."
+policy:
+  allow_implicit_invocation: true

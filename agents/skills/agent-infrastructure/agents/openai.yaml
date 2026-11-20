@@ -1,0 +1,6 @@
+interface:
+  display_name: "Agent Infrastructure"
+  short_description: "Maintain lean agent configuration"
+  default_prompt: "Use $agent-infrastructure to audit and improve my agent instruction hierarchy."
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Confluence Compact"
+  short_description: "Compact batched Confluence retrieval"
+  default_prompt: "Use $confluence-compact to retrieve and reduce the relevant Confluence pages efficiently."
+
+policy:
+  allow_implicit_invocation: true

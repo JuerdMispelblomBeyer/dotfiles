@@ -1,0 +1,203 @@
+#!/usr/bin/env python3
+"""Audit Codex instruction discovery without loading instruction bodies."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+import tomllib
+
+WARN_BYTES = 12_000
+FAIL_BYTES = 16_000
+GLOBAL_WARN_BYTES = 5_000
+SKIP_DIRS = {
+    ".git", ".cache", "archive", "build", "codex-app", "dist", "dist-next",
+    "install", "log", "node_modules", "target", "rootfs", "vendor", ".venv", "downloads", "sstate-cache",
+}
+
+
+def project_root(target: Path) -> Path:
+    """Approximate native discovery from user-configured filesystem markers.
+
+    A .git marker need not be a valid Git repository. Project/managed config
+    overrides are not resolved here; the client remains authoritative.
+    """
+    target = target.resolve()
+    markers = [".git"]
+    config = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")) / "config.toml"
+    try:
+        markers = tomllib.loads(config.read_text()).get("project_root_markers", markers)
+    except FileNotFoundError:
+        pass
+    if not markers:
+        return target
+    for directory in (target, *target.parents):
+        if any((directory / marker).exists() for marker in markers):
+            return directory
+    return target
+
+
+def selected_file(directory: Path) -> Path | None:
+    for name in ("AGENTS.override.md", "AGENTS.md"):
+        candidate = directory / name
+        try:
+            if candidate.is_file() and candidate.stat().st_size:
+                return candidate
+        except OSError:
+            pass
+    return None
+
+
+def instruction_chain(target: Path, native_only: bool = False) -> list[tuple[str, Path]]:
+    target = (target if target.is_dir() else target.parent).resolve()
+    chain: list[tuple[str, Path]] = []
+    seen: set[Path] = set()
+    codex_home = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex"))
+    global_file = selected_file(codex_home)
+    if global_file:
+        chain.append(("global", global_file))
+        seen.add(global_file.resolve())
+
+    root = project_root(target)
+    # The personal policy explicitly supplies ancestors that native discovery
+    # skips at nested Git roots or in a non-Git working directory.
+    home = Path.home().resolve()
+    if not native_only and target.is_relative_to(home):
+        start = home
+    else:
+        start = root
+    directories = [start]
+    cursor = start
+    for part in target.relative_to(start).parts:
+        cursor /= part
+        directories.append(cursor)
+    for directory in directories:
+        local = selected_file(directory)
+        if local and local.resolve() not in seen:
+            scope = "project" if directory.is_relative_to(root) else "supplement"
+            chain.append((scope, local))
+            seen.add(local.resolve())
+    return chain
+
+
+def human_bytes(value: int) -> str:
+    if value < 1024:
+        return f"{value} B"
+    return f"{value / 1024:.1f} KiB"
+
+
+def command_chain(target: Path, native_only: bool = False) -> int:
+    chain = instruction_chain(target, native_only)
+    total = sum(path.stat().st_size for _, path in chain)
+    print(f"target: {target.resolve()}")
+    print(f"native_project_root: {project_root(target if target.is_dir() else target.parent)}")
+    print("discovery: user markers; project/managed overrides are not resolved")
+    if not native_only:
+        print("supplement: missing ancestors must be read once under the personal policy")
+    if not chain:
+        print("instruction_files: none")
+        return 0
+    print("instruction_files:")
+    for index, (scope, path) in enumerate(chain, 1):
+        size = path.stat().st_size
+        print(f"  {index}. {scope:10} {human_bytes(size):>9}  {path}")
+    print(f"total: {human_bytes(total)} (~{(total + 3) // 4:,} tokens by byte heuristic)")
+    if total > FAIL_BYTES:
+        print(f"status: FAIL (effective guidance exceeds {human_bytes(FAIL_BYTES)})")
+        return 2
+    if total > WARN_BYTES:
+        print(f"status: WARN (effective guidance exceeds {human_bytes(WARN_BYTES)})")
+        return 1
+    print("status: OK")
+    return 0
+
+
+def iter_guidance(root: Path, include_archive: bool = False):
+    if root.is_file():
+        yield root
+        return
+    for current, dirs, files in os.walk(root):
+        dirs[:] = [d for d in dirs if (d not in SKIP_DIRS or (include_archive and d == "archive")) and not d.startswith(".codex-log")]
+        for name in files:
+            if name in {"AGENTS.md", "AGENTS.override.md", "CLAUDE.md"}:
+                yield Path(current) / name
+
+
+def normalized_rules(text: str):
+    for line in text.splitlines():
+        stripped = re.sub(r"\s+", " ", line.strip().lower())
+        if stripped.startswith(("- ", "* ")) and len(stripped) >= 40:
+            yield stripped
+
+
+def command_lint(target: Path, include_archive: bool = False) -> int:
+    files = sorted(iter_guidance(target.resolve(), include_archive))
+    errors: list[str] = []
+    warnings: list[str] = []
+    rules: dict[str, list[Path]] = {}
+    for path in files:
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeError) as error:
+            errors.append(f"{path}: cannot read: {error}")
+            continue
+        size = len(text.encode())
+        if size > FAIL_BYTES:
+            errors.append(f"{path}: {human_bytes(size)} exceeds {human_bytes(FAIL_BYTES)}")
+        elif size > WARN_BYTES:
+            warnings.append(f"{path}: {human_bytes(size)} exceeds {human_bytes(WARN_BYTES)}")
+        if path.name == "AGENTS.md" and path.parent.name in {".codex", "agents"} and size > GLOBAL_WARN_BYTES:
+            warnings.append(f"{path}: central policy exceeds {human_bytes(GLOBAL_WARN_BYTES)}")
+        dates = re.findall(r"\b20\d{2}-\d{2}-\d{2}\b", text)
+        mutable_hits = sum(
+            bool(re.search(pattern, text, re.IGNORECASE | re.MULTILINE))
+            for pattern in (r"^status:\s", r"^current (state|status|pause point):", r"observed on 20\d{2}")
+        )
+        if path.name.startswith("AGENTS") and (len(dates) >= 5 or mutable_hits >= 2):
+            warnings.append(f"{path}: looks like mutable status/history; route it to STATUS.md or dated reports")
+        if path.name.startswith("AGENTS") and re.search(r"@(?:/|~).*AGENTS\.md", text):
+            errors.append(f"{path}: explicitly imports AGENTS.md; Codex already builds the hierarchy")
+        for rule in normalized_rules(text):
+            rules.setdefault(hashlib.sha256(rule.encode()).hexdigest(), []).append(path)
+    duplicate_groups = set()
+    for paths in rules.values():
+        unique = sorted(set(paths))
+        for path in unique:
+            active = tuple(sorted(set(unique) & {entry for _, entry in instruction_chain(path.parent)}))
+            if len(active) > 1:
+                duplicate_groups.add(active)
+    for group in sorted(duplicate_groups):
+        warnings.append("duplicate long rules in one active chain: " + ", ".join(str(path) for path in group))
+
+    print(f"files: {len(files)}")
+    for message in warnings:
+        print(f"WARN: {message}")
+    for message in errors:
+        print(f"ERROR: {message}")
+    print(f"summary: {len(errors)} errors, {len(warnings)} warnings")
+    return 2 if errors else (1 if warnings else 0)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(prog="agentctl", description=__doc__)
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    for name in ("chain", "lint"):
+        sub = subparsers.add_parser(name)
+        sub.add_argument("target", nargs="?", default=".", type=Path)
+        if name == "chain":
+            sub.add_argument("--native", action="store_true", help="omit policy-supplied ancestors")
+        else:
+            sub.add_argument("--include-archive", action="store_true", help="include historical guidance, excluding generated trees")
+    args = parser.parse_args()
+    if args.command == "chain":
+        return command_chain(args.target, args.native)
+    return command_lint(args.target, args.include_archive)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

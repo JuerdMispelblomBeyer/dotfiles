@@ -1,0 +1,6 @@
+interface:
+  display_name: "Token Audit"
+  short_description: "Measure local Codex token usage"
+  default_prompt: "Use $token-audit to measure recent Codex context and tool-output usage."
+policy:
+  allow_implicit_invocation: false

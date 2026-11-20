@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+"""Suggest narrow checks for changed files, with optional .agents/checks.toml rules."""
+
+from __future__ import annotations
+
+import argparse
+import fnmatch
+from pathlib import Path
+import subprocess
+import tomllib
+
+
+DEFAULTS = [
+    (("*.sh",), "bash -n <changed shell files>"),
+    (("*.py",), "run the nearest targeted Python test or compile check"),
+    (("*.js", "*.mjs", "*.cjs"), "run the nearest targeted Node test"),
+    (("*.ts", "*.tsx"), "run the package typecheck and nearest targeted test"),
+    (("*.rs",), "cargo test for the affected package"),
+    (("*.md",), "review Markdown structure and links; no broad build by default"),
+]
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(prog="check-route", description=__doc__)
+    parser.add_argument("path", nargs="?", default=".", type=Path)
+    args = parser.parse_args()
+    try:
+        root = Path(subprocess.check_output(["git", "-C", str(args.path), "rev-parse", "--show-toplevel"], text=True, stderr=subprocess.DEVNULL).strip())
+        changed = subprocess.check_output(["git", "-C", str(root), "status", "--porcelain"], text=True).splitlines()
+        files = [line[3:] for line in changed if len(line) > 3]
+    except subprocess.CalledProcessError:
+        print("not a Git repository")
+        return 2
+    rules = []
+    config = root / ".agents" / "checks.toml"
+    if config.exists():
+        data = tomllib.loads(config.read_text())
+        for rule in data.get("route", []):
+            rules.append((tuple(rule.get("globs", [])), rule.get("command", "")))
+    rules.extend(DEFAULTS)
+    suggestions = []
+    for globs, command in rules:
+        matched = sorted({name for name in files if any(fnmatch.fnmatch(name, pattern) for pattern in globs)})
+        if matched and command and command not in [item[0] for item in suggestions]:
+            suggestions.append((command, matched[:8]))
+    print(f"changed_files: {len(files)}")
+    for command, matched in suggestions:
+        print(f"- {command}")
+        print("  matches: " + ", ".join(matched))
+    if not suggestions:
+        print("- inspect project guidance for the smallest relevant check")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

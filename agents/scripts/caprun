@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+max_lines=120
+max_bytes=12000
+log_dir="${AGENT_LOG_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/agent-tools/caprun}"
+
+usage() {
+  echo "usage: caprun [--max-lines N] [--max-bytes N] [--log-dir DIR] -- COMMAND [ARG ...]"
+}
+
+while (($#)); do
+  case "$1" in
+    --max-lines) max_lines="$2"; shift 2 ;;
+    --max-bytes) max_bytes="$2"; shift 2 ;;
+    --log-dir) log_dir="$2"; shift 2 ;;
+    --) shift; break ;;
+    -h|--help) usage; exit 0 ;;
+    *) break ;;
+  esac
+done
+if (($# == 0)); then usage >&2; exit 2; fi
+[[ "$max_lines" =~ ^[1-9][0-9]*$ && "$max_bytes" =~ ^[1-9][0-9]*$ ]] || { echo "limits must be positive integers" >&2; exit 2; }
+
+mkdir -p "$log_dir"
+stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+log="$log_dir/${stamp}-$$.log"
+start="$(date +%s)"
+set +e
+"$@" >"$log" 2>&1
+rc=$?
+set -e
+duration=$(( $(date +%s) - start ))
+bytes="$(wc -c <"$log")"
+lines="$(wc -l <"$log")"
+
+printf 'exit=%d duration=%ss output=%sB/%s-lines log=%s\n' "$rc" "$duration" "$bytes" "$lines" "$log"
+if ((bytes <= max_bytes && lines <= max_lines)); then
+  cat "$log"
+else
+  half=$((max_lines / 2))
+  half_bytes=$((max_bytes / 2))
+  ((half > 0)) || half=1
+  ((half_bytes > 0)) || half_bytes=1
+  echo "--- bounded output: first $half lines ---"
+  head -n "$half" "$log" | head -c "$half_bytes"
+  echo
+  echo "--- bounded output: last $half lines ---"
+  tail -n "$half" "$log" | tail -c "$half_bytes"
+  echo
+  echo "--- omitted; inspect the log only if needed ---"
+fi
+exit "$rc"
